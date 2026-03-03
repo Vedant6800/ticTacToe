@@ -1,10 +1,10 @@
 /* ============================================================
-   FIREBASE IMPORTS (v12 modular via CDN ESM)
+   FIREBASE IMPORTS (v10 modular via CDN ESM)
    ============================================================ */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {
     getDatabase, ref, set, update, onValue, remove, onDisconnect, get
-} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
 
 /* ============================================================
    FIREBASE CONFIGURATION
@@ -31,22 +31,6 @@ const WIN_PATTERNS = [
     [0, 3, 6], [1, 4, 7], [2, 5, 8], // cols
     [0, 4, 8], [2, 4, 6],          // diagonals
 ];
-
-/* ============================================================
-   BOARD NORMALIZER
-   Firebase drops null values from arrays, so sparse boards
-   come back as objects or short arrays. This rebuilds a proper
-   9-element array with null for empty cells.
-   ============================================================ */
-function normalizeBoard(raw) {
-    const board = Array(9).fill(null);
-    if (raw) {
-        for (let i = 0; i < 9; i++) {
-            if (raw[i]) board[i] = raw[i];
-        }
-    }
-    return board;
-}
 
 /* ============================================================
    LOCAL STATE
@@ -145,12 +129,12 @@ async function createRoom(playerName) {
     roomRef = ref(db, `rooms/${roomId}`);
 
     const roomPayload = {
-        board: [null, null, null, null, null, null, null, null, null],
+        board: ["", "", "", "", "", "", "", "", ""],
         turn: 'X',
-        winner: null,
+        winner: '',
         players: {
             X: playerName,
-            O: null
+            O: ''
         },
         createdAt: Date.now()
     };
@@ -197,7 +181,7 @@ async function joinRoom(id, playerName) {
 
         const data = snapshot.val();
 
-        if (data.players?.O) {
+        if (data.players?.O && data.players.O !== '') {
             showLobbyError('Room is full! Both players already joined.');
             roomId = null;
             return;
@@ -239,7 +223,7 @@ function listenToRoom(id) {
         roomData = snapshot.val();
 
         // Both players present → go to game screen
-        if (roomData.players?.X && roomData.players?.O) {
+        if (roomData.players?.X && roomData.players?.O && roomData.players.O !== '') {
             renderGame(roomData);
         }
     }, (error) => {
@@ -269,7 +253,7 @@ function renderGame(data) {
     roomBadge.textContent = `Room: ${roomId}`;
 
     // Board
-    const board = normalizeBoard(data.board);
+    const board = data.board || Array(9).fill('');
     boxes.forEach((box, i) => {
         const val = board[i];
         box.innerHTML = val || '';
@@ -278,11 +262,11 @@ function renderGame(data) {
         if (val === 'X') box.classList.add('played-x');
         else if (val === 'O') box.classList.add('played-o');
 
-        box.disabled = !!val || !!data.winner;
+        box.disabled = (val !== '' && val !== null) || (data.winner !== '' && data.winner !== null && !!data.winner);
     });
 
     // Turn / Winner
-    if (data.winner) {
+    if (data.winner && data.winner !== '') {
         handleResultFromFirebase(data);
     } else {
         renderTurn(data);
@@ -309,7 +293,7 @@ function renderTurn(data) {
     if (!isMyTurn) {
         boxes.forEach(box => { if (!box.innerHTML) box.disabled = true; });
     } else {
-        boxes.forEach(box => { if (!box.innerHTML && !data.winner) box.disabled = false; });
+        boxes.forEach(box => { if (!box.innerHTML && (!data.winner || data.winner === '')) box.disabled = false; });
     }
 }
 
@@ -318,11 +302,11 @@ function renderTurn(data) {
    ============================================================ */
 async function makeMove(index) {
     if (!roomData || !roomId) return;
-    if (roomData.winner) return;
+    if (roomData.winner && roomData.winner !== '') return;
     if (roomData.turn !== myMark) return;
 
-    const board = normalizeBoard(roomData.board);
-    if (board[index]) return;
+    const board = [...(roomData.board || Array(9).fill(''))];
+    if (board[index] !== '' && board[index] !== null) return;
 
     // Place mark locally in board array
     board[index] = myMark;
@@ -330,8 +314,10 @@ async function makeMove(index) {
     // Check for winner / draw
     const result = checkWinner(board);
 
-    const updates = {};
-    updates[`board/${index}`] = myMark;
+    // Write the FULL board array to avoid Firebase path-based object/array confusion
+    const updates = {
+        board: board
+    };
 
     if (result) {
         if (result.type === 'win') {
@@ -355,11 +341,11 @@ async function makeMove(index) {
    ============================================================ */
 function checkWinner(board) {
     for (const [a, b, c] of WIN_PATTERNS) {
-        if (board[a] && board[a] === board[b] && board[b] === board[c]) {
+        if (board[a] && board[a] !== '' && board[a] === board[b] && board[b] === board[c]) {
             return { type: 'win', mark: board[a], cells: [a, b, c] };
         }
     }
-    if (board.every(cell => cell != null)) {
+    if (board.every(cell => cell !== null && cell !== '')) {
         return { type: 'draw' };
     }
     return null;
@@ -372,8 +358,8 @@ let resultShown = false;
 
 function handleResultFromFirebase(data) {
     // Highlight winning cells
-    if (data.winner !== 'draw') {
-        const board = normalizeBoard(data.board);
+    if (data.winner && data.winner !== '' && data.winner !== 'draw') {
+        const board = data.board || [];
         const winResult = checkWinner(board);
         if (winResult && winResult.cells) {
             winResult.cells.forEach(i => {
@@ -433,9 +419,9 @@ async function resetBoard() {
 
     try {
         await update(ref(db, `rooms/${roomId}`), {
-            board: [null, null, null, null, null, null, null, null, null],
+            board: ["", "", "", "", "", "", "", "", ""],
             turn: 'X',
-            winner: null
+            winner: ''
         });
     } catch (err) {
         console.error('Reset failed:', err);
@@ -575,4 +561,3 @@ menuBtn.addEventListener('click', () => {
 
     showScreen(lobbyScreen);
 })();
-
