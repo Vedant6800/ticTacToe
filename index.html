@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe — Multiplayer Neon Edition</title>
+    <meta name="description" content="A premium real-time two-player multiplayer Tic Tac Toe game powered by Firebase.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- ===== LOBBY SCREEN ===== -->
+    <div id="lobby-screen" class="overlay-screen active">
+        <div class="modal-card">
+            <div class="modal-logo">⚡</div>
+            <h1 class="modal-title">Tic Tac Toe</h1>
+            <p class="modal-subtitle">Real-time Multiplayer</p>
+
+            <div class="input-group">
+                <label for="input-name">
+                    <span class="player-badge o-badge">👤</span> Your Name
+                </label>
+                <input type="text" id="input-name" placeholder="e.g. Alice" maxlength="16" autocomplete="off">
+            </div>
+
+            <button id="create-room-btn" class="btn-primary">Create Room</button>
+
+            <div class="lobby-divider">
+                <span>or join an existing room</span>
+            </div>
+
+            <div class="input-group">
+                <label for="input-room-id">
+                    <span class="player-badge x-badge">🔑</span> Room ID
+                </label>
+                <input type="text" id="input-room-id" placeholder="Enter Room ID" maxlength="20" autocomplete="off">
+            </div>
+
+            <button id="join-room-btn" class="btn-secondary btn-full">Join Room</button>
+
+            <p id="lobby-error" class="lobby-error"></p>
+        </div>
+    </div>
+
+    <!-- ===== WAITING SCREEN ===== -->
+    <div id="waiting-screen" class="overlay-screen">
+        <div class="modal-card">
+            <div class="modal-logo waiting-pulse">⏳</div>
+            <h2 class="modal-title">Waiting for Opponent…</h2>
+            <p class="modal-subtitle">Share this Room ID with your friend:</p>
+            <div class="room-id-display">
+                <span id="display-room-id" class="room-id-text">------</span>
+                <button id="copy-room-id-btn" class="btn-icon" title="Copy Room ID">📋</button>
+            </div>
+            <p class="share-hint" id="share-link-hint"></p>
+            <button id="cancel-wait-btn" class="btn-ghost">Cancel & Delete Room</button>
+        </div>
+    </div>
+
+    <!-- ===== WIN / DRAW OVERLAY ===== -->
+    <div id="result-screen" class="overlay-screen">
+        <div class="modal-card result-card">
+            <div id="result-emoji" class="result-emoji">🏆</div>
+            <h2 id="result-title" class="result-title">Player Wins!</h2>
+            <p id="result-subtitle" class="modal-subtitle">Great game!</p>
+            <div class="result-actions">
+                <button id="next-round-btn" class="btn-primary">Next Round</button>
+                <button id="end-game-btn" class="btn-ghost">Leave Room</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MAIN GAME ===== -->
+    <div id="game-screen" class="game-screen hidden">
+
+        <header class="game-header">
+            <h1 class="brand">⚡ TicTacToe</h1>
+            <div class="header-actions">
+                <span id="room-badge" class="room-badge" title="Room ID">Room: ------</span>
+                <button id="menu-btn" class="btn-icon" title="Leave Room">☰</button>
+            </div>
+        </header>
+
+        <!-- Score board -->
+        <div class="scoreboard">
+            <div class="score-card" id="score-p1">
+                <span class="score-name" id="name-p1">Player X</span>
+                <span class="score-symbol x-color">X</span>
+                <span class="score-value" id="score-val-p1">0</span>
+            </div>
+            <div class="score-divider">
+                <span id="round-label">Round 1</span>
+            </div>
+            <div class="score-card" id="score-p2">
+                <span class="score-name" id="name-p2">Player O</span>
+                <span class="score-symbol o-color">O</span>
+                <span class="score-value" id="score-val-p2">0</span>
+            </div>
+        </div>
+
+        <!-- Turn indicator -->
+        <div class="turn-bar">
+            <div id="turn-indicator" class="turn-indicator">
+                <div class="turn-dot"></div>
+                <span id="turn-text">Waiting…</span>
+            </div>
+        </div>
+
+        <!-- Game grid -->
+        <div class="game-grid" id="game-grid">
+            <button class="box" data-index="0"></button>
+            <button class="box" data-index="1"></button>
+            <button class="box" data-index="2"></button>
+            <button class="box" data-index="3"></button>
+            <button class="box" data-index="4"></button>
+            <button class="box" data-index="5"></button>
+            <button class="box" data-index="6"></button>
+            <button class="box" data-index="7"></button>
+            <button class="box" data-index="8"></button>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="action-row">
+            <button id="new-round-btn" class="btn-secondary">New Round</button>
+            <button id="leave-room-btn" class="btn-ghost-danger">Leave Room</button>
+        </div>
+
+    </div>
+
+    <!-- Firebase SDK v10 modular (via CDN compat for non-bundler usage) -->
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>
