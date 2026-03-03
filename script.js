@@ -475,17 +475,63 @@ function handleRoomDeleted() {
 /* ============================================================
    EVENT LISTENERS — LOBBY
    ============================================================ */
+
+/* --- Locked-button helpers --- */
+function lockLobbyButtons() {
+    createRoomBtn.classList.add('btn-locked');
+    joinRoomBtn.classList.add('btn-locked');
+}
+
+function unlockLobbyButtons() {
+    createRoomBtn.classList.remove('btn-locked');
+    joinRoomBtn.classList.remove('btn-locked');
+}
+
+function shakeBtn(btn) {
+    btn.classList.remove('shake');
+    // Force reflow so the animation restarts every time
+    void btn.offsetWidth;
+    btn.classList.add('shake');
+    btn.addEventListener('animationend', () => btn.classList.remove('shake'), { once: true });
+}
+
+// Start locked — unlock as soon as name has text
+lockLobbyButtons();
+
+inputName.addEventListener('input', () => {
+    if (inputName.value.trim()) {
+        unlockLobbyButtons();
+    } else {
+        lockLobbyButtons();
+    }
+});
+
 createRoomBtn.addEventListener('click', () => {
     const name = inputName.value.trim();
-    if (!name) { inputName.focus(); return; }
+    if (!name) {
+        showLobbyError('⚠️ Please enter your name first!');
+        shakeBtn(createRoomBtn);
+        inputName.focus();
+        return;
+    }
     createRoom(name);
 });
 
 joinRoomBtn.addEventListener('click', () => {
     const name = inputName.value.trim();
     const id = inputRoomId.value.trim();
-    if (!name) { inputName.focus(); return; }
-    if (!id) { inputRoomId.focus(); return; }
+    if (!name) {
+        showLobbyError('⚠️ Please enter your name before joining!');
+        shakeBtn(joinRoomBtn);
+        inputName.focus();
+        return;
+    }
+    if (!id) {
+        showLobbyError('⚠️ Please enter a Room ID to join!');
+        shakeBtn(joinRoomBtn);
+        inputRoomId.focus();
+        return;
+    }
     joinRoom(id, name);
 });
 
