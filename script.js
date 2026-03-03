@@ -170,25 +170,32 @@ async function joinRoom(id, playerName) {
     myMark = 'O';
     roomRef = ref(db, `rooms/${roomId}`);
 
+    console.log('[joinRoom] Attempting to join room:', roomId);
+
     try {
         const snapshot = await get(roomRef);
 
         if (!snapshot.exists()) {
+            console.warn('[joinRoom] Room not found:', roomId);
             showLobbyError('Room not found. Check the ID and try again.');
             roomId = null;
             return;
         }
 
         const data = snapshot.val();
+        console.log('[joinRoom] Room data:', JSON.stringify(data));
 
         if (data.players?.O && data.players.O !== '') {
+            console.warn('[joinRoom] Room is full, O =', data.players.O);
             showLobbyError('Room is full! Both players already joined.');
             roomId = null;
             return;
         }
 
-        // Join as O
+        // Write Player O's name FIRST, then start listener so first snapshot includes both players
+        console.log('[joinRoom] Writing player O name:', playerName);
         await update(ref(db, `rooms/${roomId}/players`), { O: playerName });
+        console.log('[joinRoom] Player O write succeeded, now starting listener');
 
         // Auto-cleanup on disconnect
         onDisconnect(ref(db, `rooms/${roomId}/players/O`)).remove();
@@ -196,10 +203,10 @@ async function joinRoom(id, playerName) {
         // Update URL
         history.replaceState(null, '', `?room=${roomId}`);
 
-        // Start listening
+        // Start listening AFTER the write so the first snapshot already has both players
         listenToRoom(roomId);
     } catch (err) {
-        console.error('Join room error:', err);
+        console.error('[joinRoom] Error:', err);
         showLobbyError('Failed to join room. Check your connection.');
     }
 }
@@ -212,23 +219,28 @@ function listenToRoom(id) {
     if (unsubscribe) { unsubscribe(); unsubscribe = null; }
 
     const roomPath = ref(db, `rooms/${id}`);
+    console.log('[listenToRoom] Starting listener for room:', id, '| myMark:', myMark);
 
     unsubscribe = onValue(roomPath, (snapshot) => {
         if (!snapshot.exists()) {
-            // Room was deleted
+            console.warn('[listenToRoom] Room no longer exists, redirecting to lobby');
             handleRoomDeleted();
             return;
         }
 
         roomData = snapshot.val();
+        console.log('[listenToRoom] Snapshot received — players:', JSON.stringify(roomData.players), '| turn:', roomData.turn, '| winner:', roomData.winner);
 
         // Both players present → go to game screen
-        if (roomData.players?.X && roomData.players?.O && roomData.players.O !== '') {
+        const bothJoined = roomData.players?.X && roomData.players?.O && roomData.players.O !== '';
+        console.log('[listenToRoom] Both joined?', bothJoined);
+
+        if (bothJoined) {
             renderGame(roomData);
         }
     }, (error) => {
-        console.error('Listener error:', error);
-        showLobbyError('Connection lost.');
+        console.error('[listenToRoom] Firebase listener error:', error);
+        showLobbyError('Connection lost. Please refresh.');
     });
 }
 
