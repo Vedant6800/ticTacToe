@@ -391,6 +391,9 @@ function handleResultFromFirebase(data) {
     if (data.winner === 'draw') {
         localRound++;
 
+        console.log(`%c[SCORE] Round ${localRound - 1} — Draw! Nobody scores.`, 'color: #94a3b8; font-weight: bold');
+        console.log(`%c[SCORE] Scoreboard → X: ${localScores.X}  |  O: ${localScores.O}  |  Now on Round ${localRound}`, 'color: #facc15; font-weight: bold');
+
         setTimeout(() => {
             resultEmoji.textContent = '🤝';
             resultTitle.textContent = "It's a Draw!";
@@ -404,6 +407,9 @@ function handleResultFromFirebase(data) {
         const winnerName = data.winner === 'X' ? data.players.X : data.players.O;
         localScores[data.winner]++;
         localRound++;
+
+        console.log(`%c[SCORE] Round ${localRound - 1} — ${winnerName} (${data.winner}) wins!`, 'color: #a78bfa; font-weight: bold');
+        console.log(`%c[SCORE] Scoreboard → X: ${localScores.X}  |  O: ${localScores.O}  |  Now on Round ${localRound}`, 'color: #facc15; font-weight: bold');
 
         // Update score display
         scoreP1Display.textContent = localScores.X;
