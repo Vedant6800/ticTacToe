@@ -33,6 +33,22 @@ const WIN_PATTERNS = [
 ];
 
 /* ============================================================
+   BOARD NORMALIZER
+   Firebase drops null values from arrays, so sparse boards
+   come back as objects or short arrays. This rebuilds a proper
+   9-element array with null for empty cells.
+   ============================================================ */
+function normalizeBoard(raw) {
+    const board = Array(9).fill(null);
+    if (raw) {
+        for (let i = 0; i < 9; i++) {
+            if (raw[i]) board[i] = raw[i];
+        }
+    }
+    return board;
+}
+
+/* ============================================================
    LOCAL STATE
    ============================================================ */
 let myName = '';
@@ -253,7 +269,7 @@ function renderGame(data) {
     roomBadge.textContent = `Room: ${roomId}`;
 
     // Board
-    const board = data.board || Array(9).fill(null);
+    const board = normalizeBoard(data.board);
     boxes.forEach((box, i) => {
         const val = board[i];
         box.innerHTML = val || '';
@@ -305,8 +321,8 @@ async function makeMove(index) {
     if (roomData.winner) return;
     if (roomData.turn !== myMark) return;
 
-    const board = roomData.board || Array(9).fill(null);
-    if (board[index] !== null) return;
+    const board = normalizeBoard(roomData.board);
+    if (board[index]) return;
 
     // Place mark locally in board array
     board[index] = myMark;
@@ -343,7 +359,7 @@ function checkWinner(board) {
             return { type: 'win', mark: board[a], cells: [a, b, c] };
         }
     }
-    if (board.every(cell => cell !== null)) {
+    if (board.every(cell => cell != null)) {
         return { type: 'draw' };
     }
     return null;
@@ -357,7 +373,7 @@ let resultShown = false;
 function handleResultFromFirebase(data) {
     // Highlight winning cells
     if (data.winner !== 'draw') {
-        const board = data.board || [];
+        const board = normalizeBoard(data.board);
         const winResult = checkWinner(board);
         if (winResult && winResult.cells) {
             winResult.cells.forEach(i => {
