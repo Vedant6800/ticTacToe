@@ -1,10 +1,10 @@
 /* ============================================================
-   FIREBASE IMPORTS (v10 modular via CDN ESM)
+   FIREBASE IMPORTS (v12 modular via CDN ESM)
    ============================================================ */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import {
     getDatabase, ref, set, update, onValue, remove, onDisconnect, get
-} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
 /* ============================================================
    FIREBASE CONFIGURATION
@@ -575,3 +575,4 @@ menuBtn.addEventListener('click', () => {
 
     showScreen(lobbyScreen);
 })();
+
