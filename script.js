@@ -290,6 +290,18 @@ function renderTurn(data) {
     const currentPlayerName = isX ? data.players.X : data.players.O;
     const isMyTurn = (data.turn === myMark);
 
+    // ── KEY FIX ──────────────────────────────────────────────────────────────
+    // renderTurn is only called when winner is empty (new round / in progress).
+    // Reset resultShown HERE so BOTH players (not just whoever clicked
+    // "Next Round") are ready to detect and score the next round's result.
+    // Without this, the player who didn't click "Next Round" keeps
+    // resultShown = true and silently skips the score update.
+    // ─────────────────────────────────────────────────────────────────────────
+    if (resultShown) {
+        console.log('[renderTurn] New round detected — resetting resultShown for this player');
+        resultShown = false;
+    }
+
     turnText.textContent = isMyTurn
         ? `Your turn (${myMark})`
         : `${currentPlayerName}'s turn`;
